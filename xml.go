@@ -57,3 +57,121 @@ func isRelationElement(element xml.StartElement) bool {
 	}
 	return hasRelationAttr && hasQualifierPartOfAttr
 }
+
+// fixEmptyGroups takes the full mets.xml data and looks for groups that have
+// no content, replacing them with a copy of the administrator group's data.
+// The new METS data is returns as a byte slice.
+func fixEmptyGroups(data []byte) []byte {
+	var inbuf = bytes.NewBuffer(data)
+	var outbuf = new(bytes.Buffer)
+
+	var d = xml.NewDecoder(inbuf)
+	var e = NewXMLEncoder(outbuf)
+	e.Indent("", "  ")
+
+	var adminMemberTokens = getAdminMemberTokens(data)
+	var inGroupElement, inMembersElement, groupHasMembers bool
+	for {
+		var t, err = d.Token()
+		if t == nil {
+			break
+		}
+		if err != nil {
+			logger.Printf("Error tokenizing xml data: %s", err)
+			os.Exit(1)
+		}
+
+		switch element := t.(type) {
+		case xml.StartElement:
+			switch element.Name.Local {
+			case "Group":
+				inGroupElement = true
+				groupHasMembers = false
+			case "Members":
+				if inGroupElement {
+					inMembersElement = true
+				}
+			case "Member":
+				if inMembersElement {
+					groupHasMembers = true
+				}
+			}
+		case xml.EndElement:
+			if element.Name.Local == "Group" {
+				if !groupHasMembers {
+					for _, t := range adminMemberTokens {
+						e.EncodeToken(t)
+					}
+				}
+				inGroupElement = false
+			}
+		}
+
+		// Always encode the new token - if we had to shim anything in, it already happened above
+		e.EncodeToken(t)
+	}
+
+	return outbuf.Bytes()
+}
+
+// isAdministrativeGroupElement returns whether the xml element is defining the
+// admin group
+func isAdministrativeGroupElement(element xml.StartElement) bool {
+	if element.Name.Local != "Group" {
+		return false
+	}
+
+	for _, a := range element.Attr {
+		if a.Name.Local == "Name" && a.Value == "Administrator" {
+			return true
+		}
+	}
+	return false
+}
+
+// getAdminMemberTokens finds the <Group> tag named "Administrators" and returns all
+// tokens necessary to replicate the members
+func getAdminMemberTokens(data []byte) []xml.Token {
+	var buf = bytes.NewBuffer(data)
+
+	var d = xml.NewDecoder(buf)
+	var adminTokens []xml.Token
+
+	var inAdminGroupElement bool
+	for {
+		var t, err = d.Token()
+		if t == nil {
+			break
+		}
+		if err != nil {
+			logger.Printf("Error tokenizing xml data: %s", err)
+			os.Exit(1)
+		}
+
+		switch element := t.(type) {
+		case xml.StartElement:
+			if !inAdminGroupElement {
+				if isAdministrativeGroupElement(element) {
+					inAdminGroupElement = true
+				}
+				continue
+			}
+			if element.Name.Local == "Members" || element.Name.Local == "Member" {
+				adminTokens = append(adminTokens, t)
+			}
+		case xml.EndElement:
+			if !inAdminGroupElement {
+				continue
+			}
+
+			if element.Name.Local == "Group" {
+				inAdminGroupElement = false
+			}
+			if element.Name.Local == "Members" || element.Name.Local == "Member" {
+				adminTokens = append(adminTokens, t)
+			}
+		}
+	}
+
+	return adminTokens
+}

@@ -45,6 +45,12 @@ func getZipReadCloser(zipfile string) *zip.ReadCloser {
 	return rc
 }
 
+// rewriteMETS takes the given data and rebuilds the zip file entirely, using
+// the new METS data to replace the old
+func (z *Zippie) rewriteMETS(METSData []byte) error {
+	return nil
+}
+
 func (z *Zippie) getMETSFile(zr *zip.ReadCloser) *zip.File {
 	for _, f := range zr.File {
 		if f.Name == "mets.xml" {

@@ -53,8 +53,10 @@ func main() {
 	}
 
 	logger.Printf("Exporting %q and all objects it owns...\n", handle)
-	exportOne("1794/0", maxDepth)
 	exportRecursive([]string{handle}, 0)
+
+	logger.Println("Exporting top-level site AIP and fixing any empty groups")
+	exportSite()
 }
 
 // exportRecursive exports one or more items at the given depth, then checks
@@ -121,4 +123,15 @@ func extractHandlesFromZipfiles(path string) []string {
 	}
 
 	return handles
+}
+
+func exportSite() {
+	// Export the site, obviously
+	var e = exportOne("1794/0", maxDepth)
+	e.Path()
+	var z = NewZippie(e.Filename())
+	var oldMETS = z.extractMETS()
+	var newMETS = fixEmptyGroups(oldMETS)
+	fmt.Println(string(newMETS))
+	z.rewriteMETS(newMETS)
 }
