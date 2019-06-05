@@ -6,10 +6,10 @@ import (
 	"os"
 )
 
-// decodeMets takes the full mets.xml data as a slice of bytes rather than a
-// reader so we can close everything prior to extracting data from the mets
+// decodeMETS takes the full mets.xml data as a slice of bytes rather than a
+// reader so we can close everything prior to extracting data from the METS
 // blobs.  The return is a list of handles found as dependencies.
-func decodeMets(data []byte) []string {
+func decodeMETS(data []byte) []string {
 	var buf = bytes.NewBuffer(data)
 	var d = xml.NewDecoder(buf)
 	var handles []string

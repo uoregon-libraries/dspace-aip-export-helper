@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// Zippie wraps logging and error handling around our mets-specific zip operations
+// Zippie wraps logging and error handling around our METS-specific zip operations
 type Zippie struct {
 	Filename string
 }
@@ -16,12 +16,12 @@ func NewZippie(filename string) *Zippie {
 	return &Zippie{filename}
 }
 
-// extractMets reads zipfile and returns the "mets.xml" blob's bytes
-func (z *Zippie) extractMets() []byte {
+// extractMETS reads zipfile and returns the "mets.xml" blob's bytes
+func (z *Zippie) extractMETS() []byte {
 	var zr = getZipReadCloser(z.Filename)
 	defer zr.Close()
 
-	var f = z.getMetsFile(zr)
+	var f = z.getMETSFile(zr)
 	var rc = z.openZipFile(f)
 	defer rc.Close()
 
@@ -45,7 +45,7 @@ func getZipReadCloser(zipfile string) *zip.ReadCloser {
 	return rc
 }
 
-func (z *Zippie) getMetsFile(zr *zip.ReadCloser) *zip.File {
+func (z *Zippie) getMETSFile(zr *zip.ReadCloser) *zip.File {
 	for _, f := range zr.File {
 		if f.Name == "mets.xml" {
 			return f

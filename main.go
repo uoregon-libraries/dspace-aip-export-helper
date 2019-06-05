@@ -58,7 +58,7 @@ func main() {
 }
 
 // exportRecursive exports one or more items at the given depth, then checks
-// all zipped mets files for parents and exports them at depth + 1.  As the
+// all zipped METS files for parents and exports them at depth + 1.  As the
 // name suggests, this recurses until we see no new handles.
 func exportRecursive(handles []string, depth int) {
 	var e *Exporter
@@ -103,7 +103,7 @@ func exportOne(handle string, depth int) *Exporter {
 	return e
 }
 
-// extractHandlesFromZipfiles extracts the mets files from all zipped items in
+// extractHandlesFromZipfiles extracts the METS files from all zipped items in
 // the given path and returns all parent handles found
 func extractHandlesFromZipfiles(path string) []string {
 	var globPattern = filepath.Join(path, "*.zip")
@@ -117,7 +117,7 @@ func extractHandlesFromZipfiles(path string) []string {
 	var handles []string
 	for _, file := range zipFiles {
 		var z = NewZippie(file)
-		handles = append(handles, decodeMets(z.extractMets())...)
+		handles = append(handles, decodeMETS(z.extractMETS())...)
 	}
 
 	return handles
