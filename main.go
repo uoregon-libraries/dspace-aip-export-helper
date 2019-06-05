@@ -117,7 +117,7 @@ func extractHandlesFromZipfiles(path string) []string {
 	var handles []string
 	for _, file := range zipFiles {
 		var z = NewZippie(file)
-		handles = append(handles, decodeMETS(z.extractMETS())...)
+		handles = append(handles, decodeMETSHandles(z.extractMETS())...)
 	}
 
 	return handles
