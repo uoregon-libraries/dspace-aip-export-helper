@@ -53,6 +53,7 @@ func main() {
 	}
 
 	logger.Printf("Exporting %q and all objects it owns...\n", handle)
+	exportOne("1794/0", maxDepth)
 	exportRecursive([]string{handle}, 0)
 }
 
@@ -62,8 +63,17 @@ func main() {
 func exportRecursive(handles []string, depth int) {
 	var e *Exporter
 	for _, h := range handles {
+		// We only want one site export
+		if h == "1794/0" {
+			continue
+		}
 		logger.Printf("Exporting handle %q", h)
 		e = exportOne(h, depth)
+	}
+
+	// This happens when there are no handles other than the site root
+	if e == nil {
+		return
 	}
 
 	var parentHandles = extractHandlesFromZipfiles(e.Path())

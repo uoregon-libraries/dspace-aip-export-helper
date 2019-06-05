@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const maxDepth = 9999
+
 // Exporter holds necessary information to generate a command-line call to the DSpace exporter
 type Exporter struct {
 	// EPerson is the email address of the user doing the export - DSpace won't
@@ -35,7 +37,7 @@ func NewExporter(person string, handle string) *Exporter {
 // Path returns the location where all zip files will be stored, ending with
 // the reverse-sequential directory we use for sorting on import
 func (e *Exporter) Path() string {
-	return filepath.Join(os.TempDir(), "aip-export", fmt.Sprintf("%04d", 9999-e.Depth))
+	return filepath.Join(os.TempDir(), "aip-export", fmt.Sprintf("%04d", maxDepth-e.Depth))
 }
 
 // Filename calculates the full path to the exported zipfile, including our
