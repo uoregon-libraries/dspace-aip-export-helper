@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"io"
 	"os"
 )
@@ -28,8 +29,7 @@ func (z *Zippie) extractMETS() []byte {
 	var buf = make([]byte, f.UncompressedSize)
 	var _, err = io.ReadFull(rc, buf)
 	if err != nil {
-		logger.Printf("Error reading mets.xml from %q: %s", z.Filename, err)
-		os.Exit(1)
+		logger.Fatalf("Error reading mets.xml from %q: %s", z.Filename, err)
 	}
 
 	return buf
@@ -38,8 +38,7 @@ func (z *Zippie) extractMETS() []byte {
 func getZipReadCloser(zipfile string) *zip.ReadCloser {
 	var rc, err = zip.OpenReader(zipfile)
 	if err != nil {
-		logger.Printf("Error opening zip file %q: %s", zipfile, err)
-		os.Exit(1)
+		logger.Fatalf("Error opening zip file %q: %s", zipfile, err)
 	}
 
 	return rc
@@ -58,16 +57,14 @@ func (z *Zippie) getMETSFile(zr *zip.ReadCloser) *zip.File {
 		}
 	}
 
-	logger.Printf("Zipfile %q doesn't contain a mets.xml", z.Filename)
-	os.Exit(1)
+	logger.Fatalf("Zipfile %q doesn't contain a mets.xml", z.Filename)
 	return nil
 }
 
 func (z *Zippie) openZipFile(f *zip.File) io.ReadCloser {
 	var rc, err = f.Open()
 	if err != nil {
-		logger.Printf("Error opening %s from zipfile %q: %s", f.Name, z.Filename, err)
-		os.Exit(1)
+		logger.Fatalf("Error opening %s from zipfile %q: %s", f.Name, z.Filename, err)
 	}
 
 	return rc
