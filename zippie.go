@@ -46,8 +46,59 @@ func getZipReadCloser(zipfile string) *zip.ReadCloser {
 
 // rewriteMETS takes the given data and rebuilds the zip file entirely, using
 // the new METS data to replace the old
-func (z *Zippie) rewriteMETS(METSData []byte) error {
-	return nil
+func (z *Zippie) rewriteMETS(METSData []byte) {
+	var zr = getZipReadCloser(z.Filename)
+	defer zr.Close()
+
+	var tempout = new(bytes.Buffer)
+	var zw = zip.NewWriter(tempout)
+
+	for _, fIn := range zr.File {
+		if fIn.Name == "mets.xml" {
+			continue
+		}
+
+		var fOut, err = zw.Create(fIn.Name)
+		if err != nil {
+			logger.Fatalf("Error adding %s to in-memory zip file: %s", fIn.Name, err)
+		}
+
+		var fInRC = z.openZipFile(fIn)
+		_, err = io.CopyN(fOut, fInRC, int64(fIn.UncompressedSize))
+		if err != nil {
+			logger.Fatalf("Error copying %q from zip file %q: %s", fIn.Name, z.Filename, err)
+		}
+	}
+
+	var fOut, err = zw.Create("mets.xml")
+	if err != nil {
+		logger.Fatalf("Error adding mets.xml to in-memory zip file: %s", err)
+	}
+	_, err = fOut.Write(METSData)
+	if err != nil {
+		logger.Fatalf("Error writing mets.xml to in-memory zip file: %s", err)
+	}
+
+	err = zw.Close()
+	if err != nil {
+		logger.Fatalf("Error trying to close zip buffer when rewriting zip file %q: %s", z.Filename, err)
+	}
+
+	var rewrittenFile *os.File
+	rewrittenFile, err = os.Create(z.Filename)
+	if err != nil {
+		logger.Fatalf("Unable to remove old zip file %q: %s", z.Filename, err)
+	}
+	defer rewrittenFile.Close()
+
+	_, err = io.CopyN(rewrittenFile, tempout, int64(tempout.Len()))
+	if err != nil {
+		logger.Fatalf("Unable to write new zip file data to %q: %s", z.Filename, err)
+	}
+	err = rewrittenFile.Close()
+	if err != nil {
+		logger.Fatalf("Unable to close new zip file %q: %s", z.Filename, err)
+	}
 }
 
 func (z *Zippie) getMETSFile(zr *zip.ReadCloser) *zip.File {
