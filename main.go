@@ -132,6 +132,5 @@ func exportSite() {
 	var z = NewZippie(e.Filename())
 	var oldMETS = z.extractMETS()
 	var newMETS = fixEmptyGroups(oldMETS)
-	fmt.Println(string(newMETS))
 	z.rewriteMETS(newMETS)
 }
